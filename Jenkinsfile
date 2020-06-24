@@ -3,7 +3,7 @@ pipeline {
   
   stages {
 
-	/* stage('Create Image') {
+	  stage('Create Image') {
        steps {
            sh '/usr/local/bin/packer validate packer.json'
 	   sh '/usr/local/bin/packer build packer.json'
@@ -14,11 +14,25 @@ pipeline {
        steps {
            sleep 15 //seconds
        	      }
-     			}*/
+     			}
 	  
         stage('TF Plan') {
        steps {
            sh '/usr/local/bin/terraform init -input=false'
+	   sh '/usr/local/bin/terraform state list'
+	   sh '/usr/local/bin/terraform state rm data.azurerm_client_config.current'
+           sh '/usr/local/bin/terraform state rm azurerm_key_vault.main'
+           sh '/usr/local/bin/terraform state rm azurerm_key_vault_certificate.main'
+	   sh '/usr/local/bin/terraform state rm azurerm_network_interface.main'
+   	   sh '/usr/local/bin/terraform state rm azurerm_network_interface_security_group_association.main'
+           sh '/usr/local/bin/terraform state rm azurerm_network_security_group.main'
+           sh '/usr/local/bin/terraform state rm azurerm_public_ip.main'
+           sh '/usr/local/bin/terraform state rm azurerm_resource_group.main'
+           sh '/usr/local/bin/terraform state rm azurerm_subnet.internal'
+           sh '/usr/local/bin/terraform state rm azurerm_virtual_machine.main'
+           sh '/usr/local/bin/terraform state rm azurerm_virtual_network.main' 
+           sh '/usr/local/bin/terraform state list'
+	   sh '/usr/local/bin/terraform refresh'
            sh '/usr/local/bin/terraform plan -out=myplan -input=false'
        	      }
      			}
