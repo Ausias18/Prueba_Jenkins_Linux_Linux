@@ -16,7 +16,7 @@ pipeline {
        	      }
      			}
 	  
-        stage('TF Plan') {
+      /*  stage('TF Plan') {
        steps {
            sh '/usr/local/bin/terraform init -input=false'
 	   sh '/usr/local/bin/terraform state list'
@@ -49,7 +49,7 @@ pipeline {
         }
           sh '/usr/local/bin/terraform apply -input=false myplan'
         }
-      }
+      } */
 
          }
  }
