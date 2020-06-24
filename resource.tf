@@ -3,7 +3,7 @@ variable "prefix" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "${var.prefix}-resources"
+  name     = "${var.prefix}-resources-for-Linux"
   location = "westeurope"
 }
 
@@ -48,42 +48,8 @@ resource "azurerm_network_security_group" "main" {
     resource_group_name = azurerm_resource_group.main.name
     
     security_rule {
-        name                       = "WinRm"
-        priority                   = 200
-        direction                  = "Inbound"
-        access                     = "Allow"
-        protocol                   = "Tcp"
-        source_port_range          = "*"
-        destination_port_range     = "5985-5986"
-        source_address_prefix      = "*"
-        destination_address_prefix = "*"
-    }
-      security_rule {
-        name                       = "Access-RDP"
-        priority                   = 210
-        direction                  = "Inbound"
-        access                     = "Allow"
-        protocol                   = "Tcp"
-        source_port_range          = "*"
-        destination_port_range     = "3389"
-        source_address_prefix      = "*"
-        destination_address_prefix = "*"
-    }
-  
-     security_rule {
-        name                       = "Access-http"
-        priority                   = 220
-        direction                  = "Inbound"
-        access                     = "Allow"
-        protocol                   = "Tcp"
-        source_port_range          = "*"
-        destination_port_range     = "80"
-        source_address_prefix      = "*"
-        destination_address_prefix = "*"
-    }
-       security_rule {
-        name                       = "Access-ssh"
-        priority                   = 230
+        name                       = "Access-SSH"
+        priority                   = 1001
         direction                  = "Inbound"
         access                     = "Allow"
         protocol                   = "Tcp"
@@ -93,9 +59,21 @@ resource "azurerm_network_security_group" "main" {
         destination_address_prefix = "*"
     }
   
+     security_rule {
+        name                       = "Access-http"
+        priority                   = 1002
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "80"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
+    }
+  
       security_rule {
         name                       = "InternetAccess"
-        priority                   = 240
+        priority                   = 1010
         direction                  = "Outbound"
         access                     = "Allow"
         protocol                   = "*"
@@ -117,54 +95,30 @@ resource "azurerm_network_interface_security_group_association" "main" {
 
 #--------INSTALLING Machine from Image -------------------------
 resource "azurerm_virtual_machine" "main" {
-  name                  = "${var.prefix}-vm"
+  name                  = "${var.prefix}-vm-linux"
   location              = azurerm_resource_group.main.location
   resource_group_name   = azurerm_resource_group.main.name
   network_interface_ids = [azurerm_network_interface.main.id]
   vm_size               = "Standard_A2_v2"
 
- storage_os_disk {
+ os_disk {
     name            = "FromPackerImageOsDisk"
-    managed_disk_type = "Standard_LRS"
     caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
     create_option     = "FromImage"
 }
 storage_image_reference {
-    id = "/subscriptions/2de9d718-d170-4e29-af3b-60c30e449b3c/resourceGroups/santalucia-imagenes-packer/providers/Microsoft.Compute/images/ws2016-winrm-packer"
+    id = "/subscriptions/2de9d718-d170-4e29-af3b-60c30e449b3c/resourceGroups/santalucia-imagenes-packer/providers/Microsoft.Compute/images/linux-image-packer"
 }
 
-  os_profile {
-    computer_name  = "Prueba"
+    computer_name  = "Prueba-Linux"
     admin_username = "arqsis"
-    admin_password = "Password1234!"
-  }
+    disable_password_authentication = true
+        
+    admin_ssh_key {
+        username       = "arqsis"
+        public_key     = tls_private_key.example_ssh.public_key_openssh
+    }
  
-  os_profile_windows_config { 
-     provision_vm_agent = true 
-     winrm {
-       protocol = "http"
-           } 
-                            } 
   }
 #----------------------------------------------------------------------------
-  
-#--------INSTALLING ./ConfigureRemotingForAnsible.ps1 -------------------------
-  resource "azurerm_virtual_machine_extension" "main" {
-    name            = "hostname"
-    virtual_machine_id  =  azurerm_virtual_machine.main.id
-    publisher       = "Microsoft.Compute"
-    type            = "CustomScriptExtension"
-    type_handler_version    = "1.9"
- 
-    settings = <<SETTINGS
-    {  
-    "fileUris": ["C:\\ConfigureRemotingForAnsible.ps1"]  
-    }
-    SETTINGS
-    protected_settings = <<PROTECTED_SETTINGS
-    {
-        "commandToExecute": "powershell.exe -executionpolicy Unrestricted -file ./ConfigureRemotingForAnsible.ps1"
-    }
-    PROTECTED_SETTINGS
-    }
-#-----------------------------------------------------------------------------
