@@ -3,7 +3,7 @@ pipeline {
   
   stages {
 
-	 stage('Create Image') {
+	/* stage('Create Image') {
        steps {
            sh '/usr/local/bin/packer validate packer.json'
 	   sh '/usr/local/bin/packer build packer.json'
@@ -14,7 +14,7 @@ pipeline {
        steps {
            sleep 15 //seconds
        	      }
-     			}
+     			}*/
 	  
         stage('TF Plan') {
        steps {
